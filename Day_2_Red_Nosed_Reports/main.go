@@ -9,11 +9,8 @@ import (
 )
 
 func main() {
-	//Safe if all increasing or all decreasing
-	//Any two adjacent levels differ by at least one and at most three.
-    // Need to adjust to only counting failures for isAscending or isDescending not bot
 	var safeReports = 0
-	content, err := os.ReadFile("test_input.txt")
+	content, err := os.ReadFile("input.txt")
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
@@ -29,55 +26,77 @@ func main() {
 			}
 			report = append(report, number)
 		}
-		if isReportSafe(report) {
-			fmt.Printf("Report %v is safe\n", report)
+
+		if (isAscending(report) || isDescending(report)) &&
+			differencesWithinLimit(report, 1, 3) {
 			safeReports++
+			fmt.Printf("Report is safe: %v\n", report)
 		} else {
-			fmt.Printf("Report %v is not safe\n", report)
+			fmt.Printf("Report is not safe: %v\n", report)
+			if problemDampener(report) {
+				safeReports++
+				fmt.Printf("Problem Dampener marked the report as safe: %v\n", report)
+			} else {
+				fmt.Printf("Problem Dampener failed to mark the report as safe: %v\n", report)
+			}
 		}
+		fmt.Println("--------------------------------------------------")
 	}
 	fmt.Printf("There are %v safe reports\n", safeReports)
 }
 
-func isReportSafe(numbers []int) bool {
-	ascFails := isAscending(numbers)
-	descFails := isDescending(numbers)
-	diffFails := differencesWithinLimit(numbers, 1, 3)
-	totalFailures := ascFails + descFails + diffFails
-	return totalFailures <= 1
+func combiGenerator(report []int) [][]int {
+	subReports := make([][]int, 0) // Initialize an empty slice of slices for subReports
+
+	for i := 0; i < len(report); i++ {
+		// Create a sub-report by concatenating slices before and after index i
+		combo := append([]int(nil), report[:i]...) // Copy elements before i
+		combo = append(combo, report[i+1:]...)     // Append elements after i
+		subReports = append(subReports, combo)     // Add the resulting sub-report to the list
+	}
+
+	return subReports
 }
 
-func isAscending(numbers []int) int {
-	failures := 0
-	for i := 0; i < len(numbers)-1; i++ {
-		if numbers[i] >= numbers[i+1] {
-			failures++
+func problemDampener(report []int) bool {
+	fmt.Printf("Problem Dampener is checking: %v\n", report)
+	subReports := combiGenerator(report)
+
+	for _, subReport := range subReports {
+		if (isAscending(subReport) || isDescending(subReport)) &&
+			differencesWithinLimit(subReport, 1, 3) {
+			return true // Return true immediately when a valid sub-report is found
 		}
 	}
-	return failures
-
+	return false // Return false if no valid sub-report is found after checking all
 }
 
-func isDescending(numbers []int) int {
-	failures := 0
-	for i := 0; i < len(numbers)-1; i++ {
-		if numbers[i] <= numbers[i+1] {
-			failures++
+func isAscending(report []int) bool {
+	for i := 0; i < len(report)-1; i++ {
+		if report[i] >= report[i+1] {
+			return false
 		}
 	}
-	return failures
+	return true
 }
 
-func differencesWithinLimit(numbers []int, minDiff, maxDiff int) int {
-	failures := 0
-	for i := 0; i < len(numbers)-1; i++ {
-		diff := abs(numbers[i] - numbers[i+1])
+func isDescending(report []int) bool {
+	for i := 0; i < len(report)-1; i++ {
+		if report[i] <= report[i+1] {
+			return false
+		}
+	}
+	return true
+}
+
+func differencesWithinLimit(report []int, minDiff, maxDiff int) bool {
+	for i := 0; i < len(report)-1; i++ {
+		diff := abs(report[i] - report[i+1])
 		if diff < minDiff || diff > maxDiff {
-			failures++
+			return false
 		}
 	}
-	return failures
-
+	return true
 }
 
 func abs(a int) int {
