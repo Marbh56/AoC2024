@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Read the entire file into a byte slice
-	data, err := ioutil.ReadFile("input.txt")
+	data, err := os.ReadFile("input.txt")
 	if err != nil {
 		fmt.Println("err reading file:", err)
 		return
